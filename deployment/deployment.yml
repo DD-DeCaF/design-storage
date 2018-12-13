@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: design-storage-staging
+spec:
+  selector:
+    matchLabels:
+      app: design-storage
+      env: staging
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: design-storage
+        env: staging
+    spec:
+      containers:
+      - name: web
+        image: gcr.io/dd-decaf-cfbf6/design-storage:devel
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        env:
+        - name: ENVIRONMENT
+          value: staging
+        - name: SCRIPT_NAME
+          value: /design-storage
+        - name: FLASK_APP
+          value: src/design_storage/wsgi.py
+        - name: ALLOWED_ORIGINS
+          value: https://caffeine.dd-decaf.eu,http://localhost:4200
+        - name: SENTRY_DSN
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-staging
+              key: SENTRY_DSN
+        command: ["gunicorn", "-c", "gunicorn.py", "design_storage.wsgi:app"]
+        resources:
+          requests:
+            cpu: "100m"
+          limits:
+            cpu: "2000m"

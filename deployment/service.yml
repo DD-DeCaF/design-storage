@@ -1,0 +1,29 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: design-storage-production
+spec:
+  selector:
+    app: design-storage
+    env: production
+  ports:
+  - name: web
+    protocol: TCP
+    port: 80
+    targetPort: 8000
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: design-storage-staging
+spec:
+  selector:
+    app: design-storage
+    env: staging
+  ports:
+  - name: web
+    protocol: TCP
+    port: 80
+    targetPort: 8000

@@ -1,0 +1,42 @@
+sudo: required
+language: minimal
+
+git:
+  depth: 2
+
+services:
+  - docker
+
+env:
+  global:
+    - IMAGE_REPO=gcr.io/dd-decaf-cfbf6/design-storage
+    - IMAGE_TAG=${TRAVIS_BRANCH}
+
+install:
+  - docker build -t ${IMAGE_REPO}:${TRAVIS_COMMIT::12} -t ${IMAGE_REPO}:${TRAVIS_BRANCH} .
+  - make setup
+
+script:
+  - make flake8
+  - make isort
+  - make license
+  - make safety
+  - make test-travis
+
+before_deploy:
+  - ./scripts/install_gcloud.sh
+  - ./scripts/install_kubectl.sh
+  - docker push ${IMAGE_REPO}:${TRAVIS_COMMIT::12}
+  - docker push ${IMAGE_REPO}:${TRAVIS_BRANCH}
+
+deploy:
+  provider: script
+  script: ./scripts/deploy.sh
+  on:
+    all_branches: true
+
+notifications:
+  email: false
+  slack:
+    rooms:
+      - secure: "Kwchcxj20qkx2FbwJjcfBLl9esffmJOP2wq9Phxl1cs0ysvZ3dgna/ts+YyuSXw4se23EU+mC1T8lfr25DYNf3cnZuRkmKUg766URyUCVwLvgDrdxW4X9u5w/Hnkog7Lb3nB14FRhzqrPjzFhnwgw0dSuIoX5l9LorVngP5XbyqB22heSriy71yGIy4Ffndw00w4hnsSdzEY1Vakt2IahvIDUCQPG/DUeO5sLL2EEmCPprIp4cLyjcmJL6y0MR8EJlF5mxMvflZh4FqSJKHSxTVP5ONHvRU1ySWGzPtMt5bwuwNWMrCeYLa3DRxIClvVTvlGk96usYPrlEyfaOeHfJUlF3Iz1wjZ3AYVg/LTbY8Osbcrfh/SRmwsj6fbX+FEKflBQjg+hy6O+Fet5OsaLhhd4XIdTkPf5jQr07zy9PmMCJ3zJL9Uuqs5gIWrmta9oMOVxjzDQ/TROMLmBSt17UljLUesXYLb9eHdxliq7GFu6GfLULrvh3u7/xFMnfxFFLpjWkgUBeUG5CSgT4zWh9JGda+z9ER7Eh5o4yZN7pEhJjkES4ljW9M15wVC3UrOlfsjV5wK6typdLDvFKW32k6YslpZouHKCQ4PeCnN1CWen73di72r05G/+qNabyQNiuaQkVDf0UlEXaWp6U9YFmdCkCDSpuQBUzdSDyTeS5o="
