@@ -27,6 +27,7 @@ services:
       - POSTGRES_DB_NAME=${POSTGRES_DB_NAME:-designs}
       - POSTGRES_USERNAME=${POSTGRES_USERNAME:-postgres}
       - POSTGRES_PASS=${POSTGRES_PASS}
+      - IAM_API=${IAM_API:-https://api-staging.dd-decaf.eu/iam}
     command: gunicorn -c gunicorn.py design_storage.wsgi:app
 
   postgres:

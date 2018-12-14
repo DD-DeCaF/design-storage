@@ -7,3 +7,4 @@ Flask-Migrate
 flask-sqlalchemy
 psycopg2
 sqlalchemy
+python-jose

@@ -24,7 +24,7 @@ from flask_migrate import Migrate
 from raven.contrib.flask import Sentry
 from werkzeug.contrib.fixers import ProxyFix
 
-from . import errorhandlers, resources
+from . import errorhandlers, jwt, resources
 from .models import db
 from .settings import current_config
 
@@ -54,6 +54,9 @@ def init_app(application):
 
     # Add CORS information for all resources.
     CORS(application)
+
+    # Add JWT middleware
+    jwt.init_app(application)
 
     # Register error handlers
     errorhandlers.init_app(application)

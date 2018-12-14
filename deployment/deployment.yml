@@ -50,6 +50,8 @@ spec:
             secretKeyRef:
               name: design-storage-staging
               key: POSTGRES_PASS
+        - name: IAM_API
+          value: "http://iam-staging/iam"
         command: ["/bin/sh", "-c"]
         args: ["flask db upgrade && gunicorn -c gunicorn.py design_storage.wsgi:app"]
         resources:
