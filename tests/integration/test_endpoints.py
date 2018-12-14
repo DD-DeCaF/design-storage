@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test expected functioning of the OpenAPI docs endpoints."""
+"""Test expected functioning of HTTP endpoints."""
 
 
 def test_docs(client):
