@@ -16,8 +16,8 @@
 """Provide settings for different deployment scenarios."""
 
 import os
-import requests
 
+import requests
 import werkzeug.exceptions
 
 
