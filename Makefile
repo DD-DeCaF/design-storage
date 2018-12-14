@@ -14,6 +14,15 @@ network:
 	docker network inspect DD-DeCaF >/dev/null 2>&1 || \
 		docker network create DD-DeCaF
 
+## Create databases.
+databases:
+	docker-compose up -d postgres
+	./scripts/wait_for_postgres.sh
+	docker-compose exec postgres psql -U postgres -c "create database designs;"
+	docker-compose exec postgres psql -U postgres -c "create database designs_test;"
+	docker-compose run --rm web flask db upgrade
+	docker-compose stop
+
 ## Build local docker images.
 build:
 	docker-compose build

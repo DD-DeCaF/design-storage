@@ -88,6 +88,11 @@ class Default:
                 'handlers': ['console'],
             },
         }
+        self.SQLALCHEMY_DATABASE_URI = (
+            'postgresql://{POSTGRES_USERNAME}:{POSTGRES_PASS}@{POSTGRES_HOST}:'
+            '{POSTGRES_PORT}/{POSTGRES_DB_NAME}'.format(**os.environ)
+        )
+        self.SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 class Development(Default):
@@ -103,6 +108,9 @@ class Testing(Default):
         """Initialize the testing environment configuration."""
         super().__init__()
         self.TESTING = True
+        self.SQLALCHEMY_DATABASE_URI = (
+            'postgresql://postgres:@postgres:5432/designs_test'
+        )
 
 
 class Production(Default):

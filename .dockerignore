@@ -2,6 +2,7 @@
 !src/
 !scripts/
 !tests/
+!migrations/
 !gunicorn.py
 !setup.cfg
 !*requirements.in

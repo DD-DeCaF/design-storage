@@ -20,10 +20,13 @@ import logging.config
 
 from flask import Flask
 from flask_cors import CORS
+from flask_migrate import Migrate
 from raven.contrib.flask import Sentry
 from werkzeug.contrib.fixers import ProxyFix
 
-from . import errorhandlers
+from . import errorhandlers, resources
+from .models import db
+from .settings import current_config
 
 
 app = Flask(__name__)
@@ -31,11 +34,14 @@ app = Flask(__name__)
 
 def init_app(application):
     """Initialize the main app with config information and routes."""
-    from design_storage.settings import current_config
     application.config.from_object(current_config())
 
     # Configure logging
     logging.config.dictConfig(application.config['LOGGING'])
+
+    # Initialize database
+    db.init_app(application)
+    Migrate(application, db)
 
     # Configure Sentry
     if application.config['SENTRY_DSN']:
@@ -44,7 +50,6 @@ def init_app(application):
         sentry.init_app(application)
 
     # Add routes and resources.
-    from design_storage import resources
     resources.init_app(application)
 
     # Add CORS information for all resources.

@@ -34,9 +34,42 @@ spec:
             secretKeyRef:
               name: design-storage-staging
               key: SENTRY_DSN
-        command: ["gunicorn", "-c", "gunicorn.py", "design_storage.wsgi:app"]
+        - name: POSTGRES_HOST
+          value: localhost
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB_NAME
+          value: designs_staging
+        - name: POSTGRES_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-staging
+              key: POSTGRES_USERNAME
+        - name: POSTGRES_PASS
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-staging
+              key: POSTGRES_PASS
+        command: ["/bin/sh", "-c"]
+        args: ["flask db upgrade && gunicorn -c gunicorn.py design_storage.wsgi:app"]
         resources:
           requests:
             cpu: "100m"
           limits:
             cpu: "2000m"
+      - name: cloudsql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.11
+        command: ["/cloud_sql_proxy", "-instances=dd-decaf-cfbf6:europe-west1:dd-decaf=tcp:5432", "-credential_file=/secrets/cloudsql/credentials.json"]
+        resources:
+          requests:
+            cpu: "100m"
+          limits:
+            cpu: "2000m"
+        volumeMounts:
+          - name: cloudsql-instance-credentials
+            mountPath: /secrets/cloudsql
+            readOnly: true
+      volumes:
+      - name: cloudsql-instance-credentials
+        secret:
+          secretName: cloudsql-instance-credentials
