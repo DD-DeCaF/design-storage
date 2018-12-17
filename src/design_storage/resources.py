@@ -18,6 +18,7 @@
 from flask_apispec import MethodResource, marshal_with, use_kwargs
 from flask_apispec.extension import FlaskApiSpec
 
+from .models import db
 from .schemas import HelloSchema
 
 
@@ -28,7 +29,15 @@ def init_app(app):
         docs.register(resource, endpoint=resource.__name__)
 
     docs = FlaskApiSpec(app)
+    app.add_url_rule('/healthz', healthz.__name__, healthz)
     register('/hello', HelloResource)
+
+
+def healthz():
+    """Return an empty, successful response for readiness checks."""
+    # Verify that the database connection is alive.
+    db.session.execute('select version()').fetchall()
+    return ""
 
 
 class HelloResource(MethodResource):
