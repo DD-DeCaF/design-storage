@@ -54,6 +54,11 @@ spec:
           value: "http://iam-staging/iam"
         command: ["/bin/sh", "-c"]
         args: ["flask db upgrade && gunicorn -c gunicorn.py design_storage.wsgi:app"]
+        readinessProbe:
+          httpGet:
+            path: /design-storage/healthz
+            port: 8000
+          initialDelaySeconds: 5
         resources:
           requests:
             cpu: "100m"
