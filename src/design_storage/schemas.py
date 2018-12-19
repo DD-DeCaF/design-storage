@@ -27,7 +27,22 @@ class StrictSchema(Schema):
         strict = True
 
 
-class HelloSchema(StrictSchema):
-    """Example schema."""
+class ReactionSchema(StrictSchema):
+    id = fields.String(required=True)
+    upper_bound = fields.Number(required=True)
+    lower_bound = fields.Number(required=True)
 
+
+class DesignSchema(StrictSchema):
+    reaction_knockins = fields.List(fields.String(required=True))
+    reaction_knockouts = fields.List(fields.String(required=True))
+    gene_knockouts = fields.List(fields.String(required=True))
+    constraints = fields.Nested(ReactionSchema, required=True, many=True)
+
+
+class DesignBaseSchema(StrictSchema):
+    id = fields.Integer(required=True)
+    project_id = fields.Integer(required=True)
     name = fields.Str(required=True)
+    model_id = fields.Integer(required=True)
+    design = fields.Nested(DesignSchema, required=True)

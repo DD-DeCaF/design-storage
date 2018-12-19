@@ -15,11 +15,14 @@
 
 """Implement RESTful API endpoints using resources."""
 
+from flask import abort, g, make_response
 from flask_apispec import MethodResource, marshal_with, use_kwargs
 from flask_apispec.extension import FlaskApiSpec
+from sqlalchemy.orm.exc import NoResultFound
 
-from .models import db
-from .schemas import HelloSchema
+from .jwt import jwt_require_claim, jwt_required
+from .models import Design, db
+from .schemas import DesignBaseSchema
 
 
 def init_app(app):
@@ -30,7 +33,8 @@ def init_app(app):
 
     docs = FlaskApiSpec(app)
     app.add_url_rule('/healthz', healthz.__name__, healthz)
-    register('/hello', HelloResource)
+    register('/designs', DesignsResource)
+    register('/designs/<int:design_id>', DesignResource)
 
 
 def healthz():
@@ -40,16 +44,80 @@ def healthz():
     return ""
 
 
-class HelloResource(MethodResource):
-    """Example API resource."""
+class DesignsResource(MethodResource):
+    """Design collection resource."""
 
-    @use_kwargs(HelloSchema)
-    @marshal_with(HelloSchema, code=200)
-    def get(self, name):
-        """
-        Implement example endpoint.
+    @marshal_with(DesignBaseSchema(many=True))
+    def get(self):
+        return Design.query.filter(
+            Design.project_id.in_(g.jwt_claims['prj']) |  # noqa: W504
+            Design.project_id.is_(None)
+        ).all()
 
-        This demonstrates both how to use request argument validation
-        (use_kwargs) and response marshalling (marshal_with).
-        """
-        return {'name': name}
+    @use_kwargs(DesignBaseSchema(exclude=('id',)))
+    @marshal_with(None, code=201)
+    @jwt_required
+    def post(self, project_id, name, model_id, design):
+        jwt_require_claim(project_id, 'write')
+        db.session.add(Design(
+            project_id=project_id,
+            name=name,
+            model_id=model_id,
+            design=design,
+        ))
+        db.session.commit()
+        return make_response('', 201)
+
+
+class DesignResource(MethodResource):
+    """Single design resource."""
+
+    @marshal_with(DesignBaseSchema, code=200)
+    def get(self, design_id):
+        try:
+            return Design.query.filter(
+                Design.id == design_id,
+            ).filter(
+                Design.project_id.in_(g.jwt_claims['prj']) |  # noqa: W504
+                Design.project_id.is_(None)
+            ).one()
+        except NoResultFound:
+            abort(404, f"Cannot find design with id {design_id}")
+
+    @use_kwargs(DesignBaseSchema(exclude=('id',), partial=True))
+    @marshal_with(None, code=204)
+    @jwt_required
+    def put(self, design_id, **payload):
+        try:
+            design = Design.query.filter(
+                Design.id == design_id,
+            ).filter(
+                Design.project_id.in_(g.jwt_claims['prj']) |  # noqa: W504
+                Design.project_id.is_(None)
+            ).one()
+        except NoResultFound:
+            abort(404, f"Cannot find design with id {design_id}")
+        else:
+            jwt_require_claim(design.project_id, 'write')
+            for key, value in payload.items():
+                setattr(design, key, value)
+            db.session.commit()
+            return make_response('', 204)
+
+    @marshal_with(None, code=204)
+    @jwt_required
+    def delete(self, design_id):
+        try:
+            design = Design.query.filter(
+                Design.id == design_id,
+            ).filter(
+                Design.project_id.in_(g.jwt_claims['prj']) |  # noqa: W504
+                Design.project_id.is_(None)
+            ).one()
+        except NoResultFound:
+            abort(404, f"Cannot find design with id {design_id}")
+        else:
+            jwt_require_claim(design.project_id, 'admin')
+            db.session.delete(design)
+            db.session.commit()
+            return make_response('', 204)
