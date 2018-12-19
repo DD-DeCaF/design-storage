@@ -10,10 +10,21 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.from datetime import datetime
-
+# limitations under the License.
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects import postgresql
 
 
 db = SQLAlchemy()
+
+
+class Design(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, nullable=True, index=True)
+    name = db.Column(db.String(), nullable=False)
+    model_id = db.Column(db.Integer, nullable=False)
+    design = db.Column(postgresql.JSONB, nullable=False)
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} {self.id}>"
