@@ -20,6 +20,7 @@ from jose import jwt
 
 from design_storage.app import app as app_
 from design_storage.app import init_app
+from design_storage.models import Design
 from design_storage.models import db as db_
 
 
@@ -103,3 +104,44 @@ def tokens(app):
             'RS512',
         ),
     }
+
+
+@pytest.fixture(scope="function")
+def design_fixtures(session):
+    """Provide test fixtures for the Design data model."""
+    fixture1 = Design(
+        id=1,
+        project_id=None,
+        name="Design one",
+        model_id=1,
+        design={
+            "constraints": [{
+                "id": "FUM",
+                "lower_bound": 0,
+                "upper_bound": 0
+            }],
+            "gene_knockouts": ["b001"],
+            "reaction_knockins": ["VANKpp"],
+            "reaction_knockouts": ["SUCDi"],
+        },
+    )
+    fixture2 = Design(
+        id=2,
+        project_id=1,
+        name="Design two",
+        model_id=2,
+        design={
+            "constraints": [{
+                "id": "FUM",
+                "lower_bound": 0,
+                "upper_bound": 0
+            }],
+            "gene_knockouts": ["b001"],
+            "reaction_knockins": ["VANKpp"],
+            "reaction_knockouts": ["SUCDi"],
+        },
+    )
+    session.add(fixture1)
+    session.add(fixture2)
+    session.commit()
+    return fixture1, fixture2
