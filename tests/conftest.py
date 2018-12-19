@@ -16,6 +16,7 @@
 """Provide session level fixtures."""
 
 import pytest
+from jose import jwt
 
 from design_storage.app import app as app_
 from design_storage.app import init_app
@@ -80,3 +81,25 @@ def session(reset_tables, connection):
     db_.session.close()
     transaction.rollback()
     db_.session = flask_sqlalchemy_session
+
+
+@pytest.fixture(scope="session")
+def tokens(app):
+    """Provide read, write and admin JWT claims to project 1."""
+    return {
+        'read': jwt.encode(
+            {'prj': {1: 'read'}},
+            app.config['JWT_PRIVATE_KEY'],
+            'RS512',
+        ),
+        'write': jwt.encode(
+            {'prj': {1: 'write'}},
+            app.config['JWT_PRIVATE_KEY'],
+            'RS512',
+        ),
+        'admin': jwt.encode(
+            {'prj': {1: 'admin'}},
+            app.config['JWT_PRIVATE_KEY'],
+            'RS512',
+        ),
+    }
