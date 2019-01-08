@@ -25,6 +25,7 @@ class Design(db.Model):
     name = db.Column(db.String(), nullable=False)
     model_id = db.Column(db.Integer, nullable=False)
     design = db.Column(postgresql.JSONB, nullable=False)
+    method = db.Column(db.String(), nullable=False)
 
     def __repr__(self):
         return f"<{self.__class__.__name__} {self.id}>"

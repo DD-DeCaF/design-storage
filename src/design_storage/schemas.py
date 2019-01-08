@@ -46,3 +46,4 @@ class DesignBaseSchema(StrictSchema):
     name = fields.Str(required=True)
     model_id = fields.Integer(required=True)
     design = fields.Nested(DesignSchema, required=True)
+    method = fields.Str(required=True)
