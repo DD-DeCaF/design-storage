@@ -124,6 +124,7 @@ def design_fixtures(session):
             "reaction_knockins": ["VANKpp"],
             "reaction_knockouts": ["SUCDi"],
         },
+        method="Manual",
     )
     fixture2 = Design(
         id=2,
@@ -140,6 +141,7 @@ def design_fixtures(session):
             "reaction_knockins": ["VANKpp"],
             "reaction_knockouts": ["SUCDi"],
         },
+        method="Manual",
     )
     session.add(fixture1)
     session.add(fixture2)

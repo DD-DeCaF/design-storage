@@ -66,6 +66,7 @@ def test_post_design(client, session, tokens):
                 "reaction_knockins": ["VANKpp"],
                 "reaction_knockouts": ["SUCDi"],
             },
+            'method': "Manual",
         },
     )
     assert response.status_code == 201
