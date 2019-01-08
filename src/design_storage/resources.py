@@ -57,15 +57,9 @@ class DesignsResource(MethodResource):
     @use_kwargs(DesignBaseSchema(exclude=('id',)))
     @marshal_with(None, code=201)
     @jwt_required
-    def post(self, project_id, name, model_id, design, method):
-        jwt_require_claim(project_id, 'write')
-        db.session.add(Design(
-            project_id=project_id,
-            name=name,
-            model_id=model_id,
-            design=design,
-            method=method,
-        ))
+    def post(self, **payload):
+        jwt_require_claim(payload['project_id'], 'write')
+        db.session.add(Design(**payload))
         db.session.commit()
         return make_response('', 201)
 
