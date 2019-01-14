@@ -69,6 +69,7 @@ def test_post_design(client, session, tokens):
             'method': "Manual",
         },
     )
+    assert isinstance(response.json['id'], int)
     assert response.status_code == 201
 
 
