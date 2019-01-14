@@ -55,13 +55,14 @@ class DesignsResource(MethodResource):
         ).all()
 
     @use_kwargs(DesignBaseSchema(exclude=('id',)))
-    @marshal_with(None, code=201)
+    @marshal_with(DesignBaseSchema, code=201)
     @jwt_required
     def post(self, **payload):
+        design = Design(**payload)
         jwt_require_claim(payload['project_id'], 'write')
-        db.session.add(Design(**payload))
+        db.session.add(design)
         db.session.commit()
-        return make_response('', 201)
+        return {'id': design.id}
 
 
 class DesignResource(MethodResource):
