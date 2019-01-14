@@ -55,7 +55,7 @@ class DesignsResource(MethodResource):
         ).all()
 
     @use_kwargs(DesignBaseSchema(exclude=('id',)))
-    @marshal_with(DesignBaseSchema, code=201)
+    @marshal_with(DesignBaseSchema(only=('id',)), code=201)
     @jwt_required
     def post(self, **payload):
         design = Design(**payload)
