@@ -14,6 +14,48 @@ spec:
         app: design-storage
         env: staging
     spec:
+      initContainers:
+      - name: migrate
+        image: gcr.io/dd-decaf-cfbf6/design-storage:devel
+        imagePullPolicy: Always
+        env:
+        - name: ENVIRONMENT
+          value: staging
+        - name: SCRIPT_NAME
+          value: /design-storage
+        - name: FLASK_APP
+          value: src/design_storage/wsgi.py
+        - name: ALLOWED_ORIGINS
+          value: https://caffeine.dd-decaf.eu,http://localhost:4200
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-staging
+              key: SECRET_KEY
+        - name: SENTRY_DSN
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-staging
+              key: SENTRY_DSN
+        - name: POSTGRES_HOST
+          value: cloudsql-proxy
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB_NAME
+          value: designs_staging
+        - name: POSTGRES_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-staging
+              key: POSTGRES_USERNAME
+        - name: POSTGRES_PASS
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-staging
+              key: POSTGRES_PASS
+        - name: IAM_API
+          value: "http://iam-staging/iam"
+        command: ["flask", "db", "upgrade"]
       containers:
       - name: web
         image: gcr.io/dd-decaf-cfbf6/design-storage:devel
@@ -57,8 +99,7 @@ spec:
               key: POSTGRES_PASS
         - name: IAM_API
           value: "http://iam-staging/iam"
-        command: ["/bin/sh", "-c"]
-        args: ["flask db upgrade && gunicorn -c gunicorn.py design_storage.wsgi:app"]
+        command: ["gunicorn", "-c", "gunicorn.py", "design_storage.wsgi:app"]
         readinessProbe:
           httpGet:
             path: /design-storage/healthz
