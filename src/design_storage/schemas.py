@@ -27,17 +27,13 @@ class StrictSchema(Schema):
         strict = True
 
 
-class ReactionSchema(StrictSchema):
-    id = fields.String(required=True)
-    upper_bound = fields.Number(required=True)
-    lower_bound = fields.Number(required=True)
-
-
 class DesignSchema(StrictSchema):
-    reaction_knockins = fields.List(fields.String(required=True))
-    reaction_knockouts = fields.List(fields.String(required=True))
-    gene_knockouts = fields.List(fields.String(required=True))
-    constraints = fields.Nested(ReactionSchema, required=True, many=True)
+    # See the Caffeine frontend for data schemas for the below fields. Consider
+    # adding the schema constraints here as well.
+    reaction_knockins = fields.List(fields.Raw(required=True))
+    reaction_knockouts = fields.List(fields.Raw(required=True))
+    gene_knockouts = fields.List(fields.Raw(required=True))
+    constraints = fields.List(fields.Raw(required=True))
 
 
 class DesignBaseSchema(StrictSchema):
