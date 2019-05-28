@@ -62,7 +62,7 @@ class DesignsResource(MethodResource):
         jwt_require_claim(payload['project_id'], 'write')
         db.session.add(design)
         db.session.commit()
-        return {'id': design.id}, 201
+        return design, 201
 
 
 class DesignResource(MethodResource):
