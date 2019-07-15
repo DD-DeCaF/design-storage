@@ -1,5 +1,7 @@
 pytest
 pytest-cov
+# Pin version due to internal error in version 4.0.0
+pydocstyle==3.0.0
 flake8
 flake8-docstrings
 isort
