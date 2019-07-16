@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: design-storage-production
+spec:
+  selector:
+    matchLabels:
+      app: design-storage
+      env: production
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: design-storage
+        env: production
+    spec:
+      initContainers:
+      - name: migrate
+        image: gcr.io/dd-decaf-cfbf6/design-storage:master
+        imagePullPolicy: Always
+        env:
+        - name: ENVIRONMENT
+          value: production
+        - name: SCRIPT_NAME
+          value: /design-storage
+        - name: FLASK_APP
+          value: src/design_storage/wsgi.py
+        - name: ALLOWED_ORIGINS
+          value: https://caffeine.dd-decaf.eu,https://staging.dd-decaf.eu,http://localhost:4200
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-production
+              key: SECRET_KEY
+        - name: SENTRY_DSN
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-production
+              key: SENTRY_DSN
+        - name: POSTGRES_HOST
+          value: cloudsql-proxy
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB_NAME
+          value: designs_production
+        - name: POSTGRES_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-production
+              key: POSTGRES_USERNAME
+        - name: POSTGRES_PASS
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-production
+              key: POSTGRES_PASS
+        - name: IAM_API
+          value: "http://iam-production/iam"
+        command: ["flask", "db", "upgrade"]
+      containers:
+      - name: web
+        image: gcr.io/dd-decaf-cfbf6/design-storage:master
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        env:
+        - name: ENVIRONMENT
+          value: production
+        - name: SCRIPT_NAME
+          value: /design-storage
+        - name: FLASK_APP
+          value: src/design_storage/wsgi.py
+        - name: ALLOWED_ORIGINS
+          value: https://caffeine.dd-decaf.eu,https://staging.dd-decaf.eu,http://localhost:4200
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-production
+              key: SECRET_KEY
+        - name: SENTRY_DSN
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-production
+              key: SENTRY_DSN
+        - name: POSTGRES_HOST
+          value: cloudsql-proxy
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB_NAME
+          value: designs_production
+        - name: POSTGRES_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-production
+              key: POSTGRES_USERNAME
+        - name: POSTGRES_PASS
+          valueFrom:
+            secretKeyRef:
+              name: design-storage-production
+              key: POSTGRES_PASS
+        - name: IAM_API
+          value: "http://iam-production/iam"
+        command: ["gunicorn", "-c", "gunicorn.py", "design_storage.wsgi:app"]
+        readinessProbe:
+          httpGet:
+            path: /design-storage/healthz
+            port: 8000
+          initialDelaySeconds: 5
+        resources:
+          requests:
+            cpu: "10m"
+          limits:
+            cpu: "2000m"
