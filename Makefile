@@ -27,6 +27,12 @@ databases:
 build:
 	docker-compose build
 
+## Recompile requirements and store pinned dependencies with hashes.
+pip-compile:
+	docker run --rm -v `pwd`/requirements:/build dddecaf/postgres-base:compiler \
+		pip-compile --upgrade --generate-hashes \
+		--output-file /build/requirements.txt /build/requirements.in
+
 ## Start all services in the background.
 start:
 	docker-compose up --force-recreate -d

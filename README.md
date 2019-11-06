@@ -22,3 +22,9 @@ possible variables and their default values.
 * `SECRET_KEY` Flask secret key. Will be randomly generated in development and testing environments.
 * `SENTRY_DSN` DSN for reporting exceptions to [Sentry](https://docs.sentry.io/clients/python/integrations/flask/).
 * `ALLOWED_ORIGINS`: Comma-seperated list of CORS allowed origins.
+
+### Updating Python dependencies
+
+To compile a new requirements file and then re-build the service with the new requirements, run:
+
+    make pip-compile build
