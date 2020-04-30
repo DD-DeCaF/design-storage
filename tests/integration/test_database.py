@@ -18,5 +18,5 @@
 
 def test_execute(session):
     """Execute an SQL statement checking the version."""
-    result = session.execute('select version()').fetchall()
+    result = session.execute("select version()").fetchall()
     assert "PostgreSQL" in result[0][0]

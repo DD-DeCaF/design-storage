@@ -37,16 +37,19 @@ def init_app(application):
     application.config.from_object(current_config())
 
     # Configure logging
-    logging.config.dictConfig(application.config['LOGGING'])
+    logging.config.dictConfig(application.config["LOGGING"])
 
     # Initialize database
     db.init_app(application)
     Migrate(application, db)
 
     # Configure Sentry
-    if application.config['SENTRY_DSN']:
-        sentry = Sentry(dsn=application.config['SENTRY_DSN'], logging=True,
-                        level=logging.ERROR)
+    if application.config["SENTRY_DSN"]:
+        sentry = Sentry(
+            dsn=application.config["SENTRY_DSN"],
+            logging=True,
+            level=logging.ERROR,
+        )
         sentry.init_app(application)
 
     # Add routes and resources.

@@ -33,7 +33,7 @@ def test_get_designs(client, session, design_fixtures):
 
 def test_get_public_designs(client, session, design_fixtures):
     response = client.get("/designs")
-    assert all([m['project_id'] is None for m in response.json])
+    assert all([m["project_id"] is None for m in response.json])
 
 
 def test_get_design(client, session, design_fixtures):
@@ -49,37 +49,31 @@ def test_get_design_not_found(client, session, design_fixtures):
 def test_post_design(client, session, tokens):
     response = client.post(
         f"/designs",
-        headers={
-            'Authorization': f"Bearer {tokens['write']}",
-        },
+        headers={"Authorization": f"Bearer {tokens['write']}",},
         json={
-            'project_id': 1,
-            'name': "Test design",
-            'model_id': 1,
-            'design': {
-                "constraints": [{
-                    "id": "FUM",
-                    "lower_bound": 0,
-                    "upper_bound": 0
-                }],
+            "project_id": 1,
+            "name": "Test design",
+            "model_id": 1,
+            "design": {
+                "constraints": [
+                    {"id": "FUM", "lower_bound": 0, "upper_bound": 0}
+                ],
                 "gene_knockouts": ["b001"],
                 "reaction_knockins": ["VANKpp"],
                 "reaction_knockouts": ["SUCDi"],
             },
-            'method': "Manual",
+            "method": "Manual",
         },
     )
-    assert isinstance(response.json['id'], int)
+    assert isinstance(response.json["id"], int)
     assert response.status_code == 201
 
 
 def test_put_design(client, session, design_fixtures, tokens):
     response = client.put(
         f"/designs/{design_fixtures[1].id}",
-        headers={
-            'Authorization': f"Bearer {tokens['write']}",
-        },
-        json={'id': 4, 'name': "Changed name"},
+        headers={"Authorization": f"Bearer {tokens['write']}",},
+        json={"id": 4, "name": "Changed name"},
     )
     assert response.status_code == 204
 
@@ -88,7 +82,8 @@ def test_put_design(client, session, design_fixtures, tokens):
 
 
 def test_delete_design(client, session, design_fixtures, tokens):
-    response = client.delete(f"/designs/{design_fixtures[1].id}", headers={
-        'Authorization': f"Bearer {tokens['admin']}",
-    })
+    response = client.delete(
+        f"/designs/{design_fixtures[1].id}",
+        headers={"Authorization": f"Bearer {tokens['admin']}",},
+    )
     assert response.status_code == 204

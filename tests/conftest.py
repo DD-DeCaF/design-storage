@@ -77,7 +77,8 @@ def session(reset_tables, connection):
     flask_sqlalchemy_session = db_.session
     transaction = connection.begin()
     db_.session = db_.create_scoped_session(
-        options={"bind": connection, "binds": {}})
+        options={"bind": connection, "binds": {}}
+    )
     yield db_.session
     db_.session.close()
     transaction.rollback()
@@ -88,20 +89,14 @@ def session(reset_tables, connection):
 def tokens(app):
     """Provide read, write and admin JWT claims to project 1."""
     return {
-        'read': jwt.encode(
-            {'prj': {1: 'read'}},
-            app.config['JWT_PRIVATE_KEY'],
-            'RS512',
+        "read": jwt.encode(
+            {"prj": {1: "read"}}, app.config["JWT_PRIVATE_KEY"], "RS512",
         ),
-        'write': jwt.encode(
-            {'prj': {1: 'write'}},
-            app.config['JWT_PRIVATE_KEY'],
-            'RS512',
+        "write": jwt.encode(
+            {"prj": {1: "write"}}, app.config["JWT_PRIVATE_KEY"], "RS512",
         ),
-        'admin': jwt.encode(
-            {'prj': {1: 'admin'}},
-            app.config['JWT_PRIVATE_KEY'],
-            'RS512',
+        "admin": jwt.encode(
+            {"prj": {1: "admin"}}, app.config["JWT_PRIVATE_KEY"], "RS512",
         ),
     }
 
@@ -115,11 +110,7 @@ def design_fixtures(session):
         name="Design one",
         model_id=1,
         design={
-            "constraints": [{
-                "id": "FUM",
-                "lower_bound": 0,
-                "upper_bound": 0
-            }],
+            "constraints": [{"id": "FUM", "lower_bound": 0, "upper_bound": 0}],
             "gene_knockouts": ["b001"],
             "reaction_knockins": ["VANKpp"],
             "reaction_knockouts": ["SUCDi"],
@@ -132,11 +123,7 @@ def design_fixtures(session):
         name="Design two",
         model_id=2,
         design={
-            "constraints": [{
-                "id": "FUM",
-                "lower_bound": 0,
-                "upper_bound": 0
-            }],
+            "constraints": [{"id": "FUM", "lower_bound": 0, "upper_bound": 0}],
             "gene_knockouts": ["b001"],
             "reaction_knockins": ["VANKpp"],
             "reaction_knockouts": ["SUCDi"],

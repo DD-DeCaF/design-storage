@@ -29,6 +29,7 @@ from .schemas import DesignBaseSchema
 
 def init_app(app):
     """Register API resources on the provided Flask application."""
+
     def register(path, resource):
         app.add_url_rule(path, view_func=resource.as_view(resource.__name__))
         with warnings.catch_warnings():
@@ -36,15 +37,15 @@ def init_app(app):
             docs.register(resource, endpoint=resource.__name__)
 
     docs = FlaskApiSpec(app)
-    app.add_url_rule('/healthz', healthz.__name__, healthz)
-    register('/designs', DesignsResource)
-    register('/designs/<int:design_id>', DesignResource)
+    app.add_url_rule("/healthz", healthz.__name__, healthz)
+    register("/designs", DesignsResource)
+    register("/designs/<int:design_id>", DesignResource)
 
 
 def healthz():
     """Return an empty, successful response for readiness checks."""
     # Verify that the database connection is alive.
-    db.session.execute('select version()').fetchall()
+    db.session.execute("select version()").fetchall()
     return ""
 
 
@@ -54,16 +55,16 @@ class DesignsResource(MethodResource):
     @marshal_with(DesignBaseSchema(many=True))
     def get(self):
         return Design.query.filter(
-            Design.project_id.in_(g.jwt_claims['prj']) |  # noqa: W504
-            Design.project_id.is_(None)
+            Design.project_id.in_(g.jwt_claims["prj"])
+            | Design.project_id.is_(None)  # noqa: W504
         ).all()
 
-    @use_kwargs(DesignBaseSchema(exclude=('id',)))
-    @marshal_with(DesignBaseSchema(only=('id',)), code=201)
+    @use_kwargs(DesignBaseSchema(exclude=("id",)))
+    @marshal_with(DesignBaseSchema(only=("id",)), code=201)
     @jwt_required
     def post(self, **payload):
         design = Design(**payload)
-        jwt_require_claim(payload['project_id'], 'write')
+        jwt_require_claim(payload["project_id"], "write")
         db.session.add(design)
         db.session.commit()
         return design, 201
@@ -75,49 +76,55 @@ class DesignResource(MethodResource):
     @marshal_with(DesignBaseSchema, code=200)
     def get(self, design_id):
         try:
-            return Design.query.filter(
-                Design.id == design_id,
-            ).filter(
-                Design.project_id.in_(g.jwt_claims['prj']) |  # noqa: W504
-                Design.project_id.is_(None)
-            ).one()
+            return (
+                Design.query.filter(Design.id == design_id,)
+                .filter(
+                    Design.project_id.in_(g.jwt_claims["prj"])
+                    | Design.project_id.is_(None)  # noqa: W504
+                )
+                .one()
+            )
         except NoResultFound:
             abort(404, f"Cannot find design with id {design_id}")
 
-    @use_kwargs(DesignBaseSchema(exclude=('id',), partial=True))
+    @use_kwargs(DesignBaseSchema(exclude=("id",), partial=True))
     @marshal_with(None, code=204)
     @jwt_required
     def put(self, design_id, **payload):
         try:
-            design = Design.query.filter(
-                Design.id == design_id,
-            ).filter(
-                Design.project_id.in_(g.jwt_claims['prj']) |  # noqa: W504
-                Design.project_id.is_(None)
-            ).one()
+            design = (
+                Design.query.filter(Design.id == design_id,)
+                .filter(
+                    Design.project_id.in_(g.jwt_claims["prj"])
+                    | Design.project_id.is_(None)  # noqa: W504
+                )
+                .one()
+            )
         except NoResultFound:
             abort(404, f"Cannot find design with id {design_id}")
         else:
-            jwt_require_claim(design.project_id, 'write')
+            jwt_require_claim(design.project_id, "write")
             for key, value in payload.items():
                 setattr(design, key, value)
             db.session.commit()
-            return make_response('', 204)
+            return make_response("", 204)
 
     @marshal_with(None, code=204)
     @jwt_required
     def delete(self, design_id):
         try:
-            design = Design.query.filter(
-                Design.id == design_id,
-            ).filter(
-                Design.project_id.in_(g.jwt_claims['prj']) |  # noqa: W504
-                Design.project_id.is_(None)
-            ).one()
+            design = (
+                Design.query.filter(Design.id == design_id,)
+                .filter(
+                    Design.project_id.in_(g.jwt_claims["prj"])
+                    | Design.project_id.is_(None)  # noqa: W504
+                )
+                .one()
+            )
         except NoResultFound:
             abort(404, f"Cannot find design with id {design_id}")
         else:
-            jwt_require_claim(design.project_id, 'admin')
+            jwt_require_claim(design.project_id, "admin")
             db.session.delete(design)
             db.session.commit()
-            return make_response('', 204)
+            return make_response("", 204)
