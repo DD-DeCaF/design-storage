@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # Copyright (c) 2018, Novo Nordisk Foundation Center for Biosustainability,
 # Technical University of Denmark.

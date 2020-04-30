@@ -15,16 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -eu
+set -u
 
 PATTERN="Novo Nordisk Foundation Center for Biosustainability"
 RET=0
 
 for file in $(find $@ -name '*.py')
 do
-  grep "${PATTERN}" ${file} >/dev/null
-  if [[ $? != 0 ]]
-  then
+  grep "${PATTERN}" "${file}" >/dev/null
+  if [ $? -ne 0 ]; then
     echo "Source code file ${file} seems to be missing a license header"
     RET=1
   fi
