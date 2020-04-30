@@ -1,18 +1,77 @@
-.PHONY: setup network build start qa style safety test test-travis flake8 \
-    isort isort-save license stop clean logs
-SHELL:=/bin/bash
+.PHONY: setup lock own build push start qa style safety test qc stop clean logs
 
-#################################################################################
-# COMMANDS                                                                      #
-#################################################################################
+################################################################################
+# Variables                                                                    #
+################################################################################
 
-## Run all initialization targets.
-setup: network databases
+IMAGE ?= gcr.io/dd-decaf-cfbf6/design-storage
+BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
+BUILD_COMMIT ?= $(shell git rev-parse HEAD)
+SHORT_COMMIT ?= $(shell git rev-parse --short HEAD)
+BUILD_TIMESTAMP ?= $(shell date --utc --iso-8601=seconds)
+BUILD_DATE ?= $(shell date --utc --iso-8601=date)
+BUILD_TAG ?= ${BRANCH}_${BUILD_DATE}_${SHORT_COMMIT}
+
+################################################################################
+# Commands                                                                     #
+################################################################################
 
 ## Create the docker bridge network if necessary.
 network:
 	docker network inspect DD-DeCaF >/dev/null 2>&1 || \
 		docker network create DD-DeCaF
+
+## Run all initialization targets.
+setup: network
+
+## Generate the compiled requirements files.
+lock:
+	docker pull dddecaf/tag-spy:latest
+	$(eval LATEST_BASE_TAG := $(shell docker run --rm dddecaf/tag-spy:latest tag-spy dddecaf/postgres-base alpine dk.dtu.biosustain.postgres-base.alpine.build.timestamp))
+	$(file >LATEST_BASE_TAG, $(LATEST_BASE_TAG))
+	$(eval COMPILER_TAG := $(subst alpine,alpine-compiler,$(LATEST_BASE_TAG)))
+	$(info ************************************************************)
+	$(info * Compiling service dependencies on the basis of:)
+	$(info * dddecaf/postgres-base:$(COMPILER_TAG))
+	$(info ************************************************************)
+	docker pull dddecaf/postgres-base:$(COMPILER_TAG)
+	docker run --rm --mount \
+		"source=$(CURDIR)/requirements,target=/opt/requirements,type=bind" \
+		dddecaf/postgres-base:$(COMPILER_TAG) \
+		pip-compile --allow-unsafe --verbose --generate-hashes --upgrade \
+		/opt/requirements/requirements.in
+
+## Change file ownership from root to local user.
+own:
+	sudo chown "$(shell id --user --name):$(shell id --group --name)" .
+
+## Build the Docker image for deployment.
+build-travis:
+	$(eval LATEST_BASE_TAG := $(shell cat LATEST_BASE_TAG))
+	$(info ************************************************************)
+	$(info * Building the service on the basis of:)
+	$(info * dddecaf/postgres-base:$(LATEST_BASE_TAG))
+	$(info * Today is $(shell date --utc --iso-8601=date).)
+	$(info * Please re-run `make lock` if you want to check for and)
+	$(info * depend on a later version.)
+	$(info ************************************************************)
+	docker pull dddecaf/postgres-base:$(LATEST_BASE_TAG)
+	docker build --build-arg BASE_TAG=$(LATEST_BASE_TAG) \
+		--build-arg BUILD_COMMIT=$(BUILD_COMMIT) \
+		--build-arg BUILD_TIMESTAMP=$(BUILD_TIMESTAMP) \
+		--tag $(IMAGE):$(BRANCH) \
+		--tag $(IMAGE):$(BUILD_TAG) \
+		.
+
+## Build local docker images.
+build:
+	$(eval LATEST_BASE_TAG := $(shell cat LATEST_BASE_TAG))
+	BASE_TAG=$(LATEST_BASE_TAG) docker-compose build
+
+## Push local Docker images to their registries.
+push:
+	docker push $(IMAGE):$(BRANCH)
+	docker push $(IMAGE):$(BUILD_TAG)
 
 ## Create databases.
 databases:
@@ -23,62 +82,52 @@ databases:
 	docker-compose run --rm web flask db upgrade
 	docker-compose stop
 
-## Build local docker images.
-build:
-	docker-compose build
-
-## Recompile requirements and store pinned dependencies with hashes.
-pip-compile:
-	docker run --rm -v `pwd`/requirements:/build dddecaf/postgres-base:compiler \
-		pip-compile --upgrade --generate-hashes \
-		--output-file /build/requirements.txt /build/requirements.in
-
 ## Start all services in the background.
 start:
 	docker-compose up --force-recreate -d
 
-## Run all QA targets.
-qa: style safety test
+## Apply all quality assurance (QA) tools.
+qa:
+	docker-compose exec -e ENVIRONMENT=testing web \
+		isort --recursive src tests
+	docker-compose exec -e ENVIRONMENT=testing web \
+		black src tests
 
-## Run all style related targets.
-style: flake8 isort license
-
-## Run flake8.
-flake8:
-	docker-compose run --rm web \
-		flake8 src/design_storage tests
-
-## Check Python package import order.
 isort:
-	docker-compose run --rm web \
-		isort --check-only --recursive src/design_storage tests
+	docker-compose exec -e ENVIRONMENT=testing web \
+		isort --check-only --diff --recursive src tests
 
-## Sort imports and write changes to files.
-isort-save:
-	docker-compose run --rm web \
-		isort --recursive src/design_storage tests
+black:
+	docker-compose exec -e ENVIRONMENT=testing web \
+		black --check --diff src tests
 
-## Verify source code license headers.
+flake8:
+	docker-compose exec -e ENVIRONMENT=testing web \
+		flake8 src tests
+
 license:
-	./scripts/verify_license_headers.sh src/design_storage tests
+	docker-compose exec -e ENVIRONMENT=testing web \
+		./scripts/verify_license_headers.sh src tests
 
-## Check for known vulnerabilities in python dependencies.
+## Run all style checks.
+style: isort black flake8 license
+
+## Check installed dependencies for vulnerabilities.
 safety:
-	docker-compose run --rm web safety check
+	docker-compose exec -e ENVIRONMENT=testing web \
+		safety check --full-report
 
-## Run the tests.
+## Run the test suite.
 test:
-	docker-compose run --rm -e ENVIRONMENT=testing web \
-		pytest --cov=src/design_storage
+	docker-compose exec -e ENVIRONMENT=testing web \
+		pytest --cov=design_storage --cov-report=term
 
-## Run the tests and report coverage (see https://docs.codecov.io/docs/testing-with-docker).
-shared := /tmp/coverage
-test-travis:
-	mkdir --parents "$(shared)"
-	docker-compose run --rm -e ENVIRONMENT=testing -v "$(shared):$(shared)" \
-		web pytest --cov-report "xml:$(shared)/coverage.xml" --cov-report term \
-		--cov=src/design_storage
-	bash <(curl -s https://codecov.io/bash) -f "$(shared)/coverage.xml"
+## Run all quality control (QC) tools.
+qc: style safety test
+
+## Check the gunicorn configuration.
+gunicorn:
+	docker-compose run --rm web gunicorn --check-config -c gunicorn.py design_storage.wsgi:app
 
 ## Stop all services.
 stop:

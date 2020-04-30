@@ -104,7 +104,6 @@ spec:
               key: POSTGRES_PASS
         - name: IAM_API
           value: "http://iam-production/iam"
-        command: ["gunicorn", "-c", "gunicorn.py", "design_storage.wsgi:app"]
         readinessProbe:
           httpGet:
             path: /design-storage/healthz

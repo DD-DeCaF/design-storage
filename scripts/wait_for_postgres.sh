@@ -23,6 +23,7 @@ set -eu
 
 echo "Waiting for postgres docker-entrypoint script to finish..."
 while [[ ! "$(docker-compose logs --no-color postgres)" = *"PostgreSQL init process complete; ready for start up."* ]]; do
+  echo .
   sleep 1
 done
 
