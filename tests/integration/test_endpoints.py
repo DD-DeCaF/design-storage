@@ -49,7 +49,7 @@ def test_get_design_not_found(client, session, design_fixtures):
 def test_post_design(client, session, tokens):
     response = client.post(
         f"/designs",
-        headers={"Authorization": f"Bearer {tokens['write']}",},
+        headers={"Authorization": f"Bearer {tokens['write']}"},
         json={
             "project_id": 1,
             "name": "Test design",
@@ -72,7 +72,7 @@ def test_post_design(client, session, tokens):
 def test_put_design(client, session, design_fixtures, tokens):
     response = client.put(
         f"/designs/{design_fixtures[1].id}",
-        headers={"Authorization": f"Bearer {tokens['write']}",},
+        headers={"Authorization": f"Bearer {tokens['write']}"},
         json={"id": 4, "name": "Changed name"},
     )
     assert response.status_code == 204
@@ -84,6 +84,6 @@ def test_put_design(client, session, design_fixtures, tokens):
 def test_delete_design(client, session, design_fixtures, tokens):
     response = client.delete(
         f"/designs/{design_fixtures[1].id}",
-        headers={"Authorization": f"Bearer {tokens['admin']}",},
+        headers={"Authorization": f"Bearer {tokens['admin']}"},
     )
     assert response.status_code == 204
