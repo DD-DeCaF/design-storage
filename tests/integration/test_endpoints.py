@@ -48,7 +48,7 @@ def test_get_design_not_found(client, session, design_fixtures):
 
 def test_post_design(client, session, tokens):
     response = client.post(
-        f"/designs",
+        "/designs",
         headers={"Authorization": f"Bearer {tokens['write']}"},
         json={
             "project_id": 1,
